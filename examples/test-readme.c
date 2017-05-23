@@ -27,7 +27,7 @@ main (int argc, char *argv[])
   GMainLoop *loop;
   GstRTSPServer *server;
   GstRTSPMountPoints *mounts;
-  GstRTSPMediaFactory *factory;
+  GstRTSPMediaFactory *factory1, *factory2;
 
   gst_init (&argc, &argv);
 
@@ -41,17 +41,23 @@ main (int argc, char *argv[])
   mounts = gst_rtsp_server_get_mount_points (server);
 
   /* make a media factory for a test stream. The default media factory can use
-   * gst-launch syntax to create pipelines. 
+   * gst-launch syntax to create pipelines.
    * any launch line works as long as it contains elements named pay%d. Each
    * element with pay%d names will be a stream */
-  factory = gst_rtsp_media_factory_new ();
-  gst_rtsp_media_factory_set_launch (factory,
-      "( videotestsrc is-live=1 ! x264enc ! rtph264pay name=pay0 pt=96 )");
+  factory1 = gst_rtsp_media_factory_new ();
+  gst_rtsp_media_factory_set_launch (factory1, "( "
+          "videotestsrc ! video/x-raw,width=300,height=300,framerate=50/1 ! "
+          "x264enc ! rtph264pay name=pay0 pt=96 "
+          "videotestsrc ! video/x-raw,width=900,height=900,framerate=2/1 ! "
+          "x264enc ! rtph264pay name=pay1 pt=97 "
+          "videotestsrc ! video/x-raw,width=1400,height=1480,framerate=1/1 ! "
+          "x264enc ! rtph264pay name=pay2 pt=98 "
+          ")");
 
-  gst_rtsp_media_factory_set_shared (factory, TRUE);
+  gst_rtsp_media_factory_set_shared (factory1, TRUE);
 
   /* attach the test factory to the /test url */
-  gst_rtsp_mount_points_add_factory (mounts, "/test", factory);
+  gst_rtsp_mount_points_add_factory (mounts, "/test", factory1);
 
   /* don't need the ref to the mapper anymore */
   g_object_unref (mounts);
@@ -65,3 +71,4 @@ main (int argc, char *argv[])
 
   return 0;
 }
+
